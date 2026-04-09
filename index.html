@@ -253,17 +253,38 @@ async function loadSheet(){
       const code = (r[2]||'').trim();
       const name = (r[3]||'').trim();
       if(!code||!name||code==='STYLE NO.') continue;
+      // Find fabric name — search cols 10-13 for first non-empty value after image col
+      const findVal = (start, end) => {
+        for(let ci=start;ci<=end;ci++){
+          const v=(r[ci]||'').trim();
+          if(v&&v!=='0'&&!/^\d{4,}$/.test(v)) return v;
+        }
+        return null;
+      };
+      const findCode = (start, end) => {
+        for(let ci=start;ci<=end;ci++){
+          const v=(r[ci]||'').trim();
+          if(v&&/\d/.test(v)&&v.length>3) return v;
+        }
+        return null;
+      };
+      const fab = (r[10]||'').trim()||null;
+      const fabCode = (r[11]||'').trim()||null;
+      // Trim cols: AL=37, AM=38 in original; with image col may shift
+      const trim = (r[38]||r[37]||'').trim()||null;
+      const trimCode = (r[39]||r[38]||'').trim()||null;
       STYLES.push({
         code, name,
         factory:(r[7]||'').trim(),
         category:(r[4]||'').trim(),
         icon:ICONS[(r[4]||'').trim()]||'🧥',
-        fab:(r[10]||'').trim()||null,
-        fabCode:(r[11]||'').trim()||null,
-        trim:(r[37]||'').trim()||null,
-        trimCode:(r[38]||'').trim()||null,
+        fab, fabCode, trim, trimCode,
       });
     }
+    console.log('Row 5 raw (CH-001):', rows[4]?rows[4].slice(0,15):'empty');
+    console.log('Row 5 col 10:', rows[4]?rows[4][10]:'');
+    console.log('Row 5 col 11:', rows[4]?rows[4][11]:'');
+    console.log('Row 5 col 12:', rows[4]?rows[4][12]:'');
     if(!STYLES.length) showErr('Sheet connected but no styles found. Check the Range Tracker tab.');
     console.log('Total styles loaded:', STYLES.length);
     console.log('First 5 styles:', STYLES.slice(0,5).map(s=>s.code+' '+s.name+' fab='+s.fab+' fabCode='+s.fabCode));
