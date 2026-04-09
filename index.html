@@ -227,21 +227,54 @@ async function init(){
 
 async function loadSheet(){
   try{
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent('Range Tracker!A5:AL54')}?key=${SHEETS_KEY}`;
-    const data = await (await fetch(url)).json();
-    if(!data.values){ showErr('Could not load Google Sheet. Make sure it is shared publicly (anyone with link can view).'); return; }
+    // Use Google Sheets public CSV export — no API key needed, just requires sheet to be public
+    const GID = '0'; // Range Tracker tab gid (first tab)
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Range%20Tracker&range=A1:BU54`;
+    const res = await fetch(url);
+    if(!res.ok){ showErr(`Could not load sheet (${res.status}). Make sure it is shared publicly — File → Share → Anyone with the link → Viewer.`); return; }
+    const text = await res.text();
+    // Parse CSV
+    const rows = parseCSV(text);
+    if(rows.length < 5){ showErr('Sheet loaded but not enough rows found.'); return; }
     const ICONS = {Bottom:'👖',Top:'👔',Jacket:'🧥',Knitwear:'🧶'};
     STYLES = [];
-    data.values.forEach(r => {
-      if(!r[2]||!r[3]) return;
+    // Data starts at row index 4 (row 5 in sheet, 0-indexed)
+    for(let i=4; i<rows.length; i++){
+      const r = rows[i];
+      const code = (r[2]||'').trim();
+      const name = (r[3]||'').trim();
+      if(!code||!name||code==='STYLE NO.') continue;
       STYLES.push({
-        code:r[2].trim(), name:r[3].trim(), factory:(r[7]||'').trim(),
+        code, name,
+        factory:(r[7]||'').trim(),
+        category:(r[4]||'').trim(),
         icon:ICONS[(r[4]||'').trim()]||'🧥',
-        fab:(r[10]||'').trim()||null, fabCode:(r[11]||'').trim()||null,
-        trim:(r[36]||'').trim()||null, trimCode:(r[37]||'').trim()||null,
+        fab:(r[10]||'').trim()||null,
+        fabCode:(r[11]||'').trim()||null,
+        trim:(r[37]||'').trim()||null,
+        trimCode:(r[38]||'').trim()||null,
       });
-    });
-  }catch(e){ showErr('Could not connect to Google Sheets. Check your internet connection.'); }
+    }
+    if(!STYLES.length) showErr('Sheet connected but no styles found. Check the Range Tracker tab.');
+  }catch(e){
+    showErr(`Connection error: ${e.message}`);
+  }
+}
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], cell = '', inQuote = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(c==='"'){ if(inQuote&&text[i+1]==='"'){cell+='"';i++;} else inQuote=!inQuote; }
+    else if(c===','&&!inQuote){ row.push(cell); cell=''; }
+    else if((c==='\n'||c==='\r')&&!inQuote){
+      if(c==='\r'&&text[i+1]==='\n') i++;
+      row.push(cell); rows.push(row); row=[]; cell='';
+    } else cell+=c;
+  }
+  if(cell||row.length) { row.push(cell); rows.push(row); }
+  return rows;
 }
 
 async function loadCloud(){
