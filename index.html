@@ -265,6 +265,9 @@ async function loadSheet(){
       });
     }
     if(!STYLES.length) showErr('Sheet connected but no styles found. Check the Range Tracker tab.');
+    console.log('Total styles loaded:', STYLES.length);
+    console.log('First 5 styles:', STYLES.slice(0,5).map(s=>s.code+' '+s.name+' fab='+s.fab+' fabCode='+s.fabCode));
+    console.log('Raw row 4 sample (first data row):', rows[4] ? rows[4].slice(0,13) : 'empty');
   }catch(e){
     showErr(`Connection error: ${e.message}`);
   }
