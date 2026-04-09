@@ -247,8 +247,8 @@ async function loadSheet(){
     if(rows.length < 5){ showErr('Sheet loaded but not enough rows found.'); return; }
     const ICONS = {Bottom:'👖',Top:'👔',Jacket:'🧥',Knitwear:'🧶'};
     STYLES = [];
-    // Data starts at row index 4 (row 5 in sheet, 0-indexed)
-    for(let i=4; i<rows.length; i++){
+    // Data starts at row index 1 (skip just the first header row in CSV)
+    for(let i=1; i<rows.length; i++){
       const r = rows[i];
       const code = (r[2]||'').trim();
       const name = (r[3]||'').trim();
