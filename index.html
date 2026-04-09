@@ -381,7 +381,7 @@ function render(){
   let html = `<div class="filter-row">${filterHtml}</div>`;
 
   if(activeTab === 'fabric'){
-    const fabStyles = filtered.filter(s=>s.fab||s.fabCode);
+    const fabStyles = filtered;
     const tracked = fabStyles.filter(s=>{ const fd=d['fab__'+s.code]||{}; return fd.samp?.num||fd.bulk?.num; }).length;
     html += `<div class="section-meta">Fabric orders · ${tracked}/${fabStyles.length} tracked</div>`;
     if(!fabStyles.length){ html+=`<div style="text-align:center;padding:40px;color:#aaa;font-size:13px">No items for this filter</div>`; }
@@ -425,7 +425,7 @@ function render(){
     });
 
   } else if(activeTab === 'trims'){
-    const trimStyles = filtered.filter(s=>s.trim||s.trimCode);
+    const trimStyles = filtered;
     const tracked = trimStyles.filter(s=>{ const td=d['trim__'+s.code]||{}; return td.samp?.num||td.bulk?.num; }).length;
     html += `<div class="section-meta">Trim orders · ${tracked}/${trimStyles.length} tracked</div>`;
     if(!trimStyles.length){ html+=`<div style="text-align:center;padding:40px;color:#aaa;font-size:13px">No items for this filter</div>`; }
