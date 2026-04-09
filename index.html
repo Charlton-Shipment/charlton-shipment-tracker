@@ -315,16 +315,43 @@ async function loadCloud(){
   if(s) binId = s;
   if(binId){
     try{
-      const d = await (await fetch(`${JSONBIN_URL}/${binId}/latest`,{headers:{'X-Master-Key':JSONBIN_KEY}})).json();
-      if(d.record){ cloudData = d.record; return; }
+      const res = await fetch(`${JSONBIN_URL}/${binId}/latest`,{
+        headers:{'X-Master-Key':JSONBIN_KEY}
+      });
+      if(res.ok){
+        const d = await res.json();
+        if(d.record){ cloudData = d.record; return; }
+      }
     }catch(e){}
+    binId = null;
+    localStorage.removeItem('charlton_bin_id');
   }
   try{
-    const d = await (await fetch(JSONBIN_URL,{method:'POST',
-      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Name':'charlton-tracking'},
-      body:'{}'})).json();
-    if(d.metadata?.id){ binId=d.metadata.id; localStorage.setItem('charlton_bin_id',binId); cloudData={}; }
-  }catch(e){ cloudData=JSON.parse(localStorage.getItem('charlton_fallback')||'{}'); }
+    const res = await fetch(JSONBIN_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Master-Key':JSONBIN_KEY,
+        'X-Bin-Name':'charlton-tracking',
+        'X-Bin-Private':'false'
+      },
+      body:JSON.stringify({tracking:{}})
+    });
+    if(res.ok){
+      const d = await res.json();
+      if(d.metadata?.id){
+        binId=d.metadata.id;
+        localStorage.setItem('charlton_bin_id',binId);
+        cloudData={};
+        console.log('Created new bin:',binId);
+        return;
+      }
+    } else {
+      const err = await res.text();
+      console.log('JSONBin create error:',res.status,err);
+    }
+  }catch(e){ console.log('JSONBin exception:',e.message); }
+  cloudData=JSON.parse(localStorage.getItem('charlton_fallback')||'{}');
 }
 
 async function saveCloud(){
