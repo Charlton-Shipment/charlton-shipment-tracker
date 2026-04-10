@@ -308,31 +308,30 @@ function parseCSV(text){
   return rows;
 }
 
-// Using jsonstore.io — free, no API key needed
-const STORE_URL = 'https://www.jsonstore.io/8f2a3b4c9d1e6f7a8b9c0d1e2f3a4b5c6d7e8f9a/charlton-tracking';
+const FIREBASE_URL = 'https://charlton-shipment-tracker-default-rtdb.asia-southeast1.firebasedatabase.app/tracking.json';
 
 async function loadCloud(){
   try{
-    const res = await fetch(STORE_URL);
+    const res = await fetch(FIREBASE_URL);
     if(res.ok){
       const d = await res.json();
-      if(d && d.result){ cloudData = d.result; console.log('Cloud data loaded'); return; }
+      if(d){ cloudData = d; console.log('Firebase loaded'); return; }
     }
-  }catch(e){ console.log('Load error:',e.message); }
+  }catch(e){ console.log('Firebase load error:',e.message); }
   cloudData = JSON.parse(localStorage.getItem('charlton_fallback')||'{}');
 }
 
 async function saveCloud(){
-  // Save locally always as backup
   localStorage.setItem('charlton_fallback', JSON.stringify(cloudData));
   try{
-    await fetch(STORE_URL, {
-      method:'POST',
+    const res = await fetch(FIREBASE_URL, {
+      method:'PUT',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(cloudData)
     });
-    console.log('Cloud saved');
-  }catch(e){ console.log('Save error:',e.message); }
+    if(res.ok) console.log('Firebase saved');
+    else console.log('Firebase save error:', res.status);
+  }catch(e){ console.log('Firebase save exception:',e.message); }
 }
 
 function showErr(msg){
